@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>น้องฟาเซีย หิ้วให้ - ระบบร้านค้า & หลังบ้าน (Secure Admin & Users)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js CDN -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts - Kanit & Prompt -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            pink: '#FF3B83',
+                            pinkLight: '#FFF0F5',
+                            pinkDark: '#E0266A',
+                            green: '#28A745',
+                            greenLight: '#E8F5E9',
+                            yellow: '#FFC107',
+                            yellowLight: '#FFF8E1',
+                        }
+                    },
+                    fontFamily: {
+                        prompt: ['Prompt', 'sans-serif'],
+                        kanit: ['Kanit', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Prompt', sans-serif; background-color: #f8fafc; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #ff8cb2; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #FF3B83; }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col justify-between" x-data="mainApp()">
+
+    <!-- Fixed Switcher Bar for Demo Testing -->
+    <div class="bg-slate-900 text-white text-xs py-2 px-4 sticky top-0 z-50 flex flex-wrap justify-between items-center shadow-md gap-2">
+        <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+            <span class="font-medium text-emerald-300">ระบบเชื่อมโยง Real-time (Secure Access)</span>
+        </div>
+        <div class="flex items-center gap-2 bg-slate-800 p-1 rounded-xl border border-slate-700">
+            <button @click="switchToStorefront()" 
+                :class="viewMode === 'storefront' ? 'bg-pink-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'"
+                class="px-3 py-1 rounded-lg font-semibold transition flex items-center gap-1.5 text-xs">
+                <i class="fa-solid fa-store"></i> มุมมองหน้าร้าน
+            </button>
+            <button @click="switchToAdmin()" 
+                :class="viewMode === 'admin' || viewMode === 'login' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'"
+                class="px-3 py-1 rounded-lg font-semibold transition flex items-center gap-1.5 text-xs">
+                <i class="fa-solid fa-user-shield"></i> ระบบแอดมิน / หลังบ้าน
+            </button>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 1: STOREFRONT / ระบบหน้าร้าน                                          -->
+    <!-- ========================================================================= -->
+    <div x-show="viewMode === 'storefront'" class="flex flex-col min-h-screen">
+        
+        <!-- Top Banner -->
+        <div class="bg-gradient-to-r from-pink-500 via-rose-500 to-emerald-500 text-white text-xs md:text-sm py-2 px-4 text-center font-medium shadow-sm">
+            <div class="container mx-auto flex justify-between items-center px-2">
+                <span>✨ หิ้วด้วยใจ ส่งให้ถึงมือ | รับออเดอร์ของหรอยพัทลุงสดใหม่ทุกวัน! 💕</span>
+                <span class="underline text-xs hidden md:inline-block">อัปเดตสต็อกเรียลไทม์</span>
+            </div>
+        </div>
+
+        <!-- Navbar -->
+        <header class="bg-white/95 backdrop-blur-md shadow-sm border-b border-pink-100 sticky top-[37px] z-40">
+            <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-pink-400 to-rose-500 p-0.5 shadow-md flex items-center justify-center">
+                        <div class="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
+                            <i class="fa-solid font-bold text-2xl text-pink-500 fa-basket-shopping"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="font-kanit font-bold text-xl md:text-2xl text-pink-600 leading-none">
+                            น้องฟาเซีย <span class="text-emerald-600">หิ้วให้</span> 🛍️
+                        </h1>
+                        <p class="text-xs text-slate-500 font-light mt-0.5">ของหรอยพัทลุง คัดสรรพิเศษ ส่งตรงถึงมือคุณ</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button @click="cartOpen = true" class="relative bg-rose-50 hover:bg-rose-100 text-pink-600 font-medium px-4 py-2.5 rounded-full transition flex items-center gap-2 border border-pink-200">
+                        <i class="fa-solid fa-cart-shopping text-lg"></i>
+                        <span class="hidden sm:inline">ตะกร้าของฉัน</span>
+                        <span class="bg-pink-600 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white" x-text="getCartTotalCount()">0</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="bg-gradient-to-b from-pink-50 via-emerald-50/30 to-slate-50 py-8 md:py-10 border-b border-slate-100">
+            <div class="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+                <div class="md:col-span-7 space-y-4 text-center md:text-left">
+                    <div class="inline-flex items-center gap-2 bg-emerald-100 text-emerald-800 text-xs px-3 py-1.5 rounded-full font-semibold">
+                        <i class="fa-solid fa-circle-check text-emerald-600"></i> คัดสรรเฉพาะของดี เมืองพัทลุง
+                    </div>
+                    <h2 class="text-3xl md:text-5xl font-kanit font-extrabold text-slate-800 leading-tight">
+                        อยากกินของอร่อยพัทลุง <br class="hidden sm:block">
+                        <span class="text-pink-600 underline decoration-wavy decoration-yellow-400">น้องฟาเซียจัดให้!</span> 💖
+                    </h2>
+                    <p class="text-slate-600 text-sm md:text-base max-w-lg mx-auto md:mx-0">
+                        ผลไม้สดตามฤดูกาล ขนมอร่อยของฝากชื่อดัง กะปิ พริกแกง ส้มโอทับทิมสยาม มะม่วงเบา สั่งง่าย สต็อกอัปเดตเรียลไทม์
+                    </p>
+                </div>
+                <div class="md:col-span-5 flex justify-center">
+                    <div class="bg-white rounded-3xl p-5 shadow-xl border-4 border-pink-200 text-center max-w-sm w-full">
+                        <span class="text-5xl mb-2 block">👧🏻🧺</span>
+                        <h3 class="font-kanit font-bold text-xl text-pink-600">น้องฟาเซีย หิ้วให้</h3>
+                        <p class="text-emerald-700 font-medium text-xs mt-1 bg-emerald-50 py-1 px-3 rounded-full inline-block border border-emerald-200">
+                            "ของหรอยพัทลุง หิ้วด้วยใจ ส่งให้ถึงมือ" 💖
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Product Catalog -->
+        <main class="max-w-6xl mx-auto px-4 py-10 w-full flex-grow">
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 border-b border-slate-200 pb-4">
+                <div>
+                    <span class="text-xs font-bold text-pink-500 tracking-wider uppercase">Phatthalung Best Specialties</span>
+                    <h2 class="text-2xl md:text-3xl font-kanit font-bold text-slate-800">รายการของหรอยคัดพิเศษ 🤤</h2>
+                </div>
+
+                <!-- Category Filters -->
+                <div class="flex flex-wrap gap-2">
+                    <button @click="categoryFilter = 'all'" :class="categoryFilter === 'all' ? 'bg-pink-600 text-white border-pink-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:bg-pink-50'" class="border px-4 py-1.5 rounded-full text-xs font-medium transition">ทั้งหมด</button>
+                    <button @click="categoryFilter = 'ผลไม้สด'" :class="categoryFilter === 'ผลไม้สด' ? 'bg-pink-600 text-white border-pink-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:bg-pink-50'" class="border px-4 py-1.5 rounded-full text-xs font-medium transition">🥭 ผลไม้สด</button>
+                    <button @click="categoryFilter = 'ขนม & ของฝาก'" :class="categoryFilter === 'ขนม & ของฝาก' ? 'bg-pink-600 text-white border-pink-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:bg-pink-50'" class="border px-4 py-1.5 rounded-full text-xs font-medium transition">🍪 ขนม & ของฝาก</button>
+                    <button @click="categoryFilter = 'เครื่องแกง & ของดี'" :class="categoryFilter === 'เครื่องแกง & ของดี' ? 'bg-pink-600 text-white border-pink-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:bg-pink-50'" class="border px-4 py-1.5 rounded-full text-xs font-medium transition">🌶️ เครื่องแกง & ของดี</button>
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <template x-for="product in filteredProductsStore" :key="product.id">
+                    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col justify-between group">
+                        <div>
+                            <div class="relative overflow-hidden aspect-square bg-slate-50 flex items-center justify-center text-7xl select-none">
+                                <span x-text="product.emoji || '📦'"></span>
+                                <span class="absolute top-2 left-2 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm text-white"
+                                    :class="product.stock > 5 ? 'bg-emerald-500' : (product.stock > 0 ? 'bg-amber-500' : 'bg-red-500')">
+                                    <i class="fa-solid fa-box mr-1"></i>
+                                    <span x-text="product.stock > 0 ? 'คงเหลือ ' + product.stock + ' ชิ้น' : 'สินค้าหมด'"></span>
+                                </span>
+                            </div>
+                            <div class="p-4">
+                                <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-medium" x-text="product.category"></span>
+                                <h3 class="font-kanit font-semibold text-slate-800 text-base line-clamp-1 mt-1" x-text="product.name"></h3>
+                                <p class="text-xs text-slate-400 mt-0.5" x-text="'หน่วย: ' + (product.unit || 'ชิ้น')"></p>
+                            </div>
+                        </div>
+                        <div class="px-4 pb-4 pt-0 flex items-center justify-between mt-2">
+                            <div>
+                                <span class="text-[10px] text-slate-400 block">ราคา</span>
+                                <p class="text-lg font-bold text-pink-600 font-kanit leading-none" x-text="'฿' + product.price"></p>
+                            </div>
+                            <button @click="addToCart(product)" 
+                                :disabled="product.stock <= 0"
+                                :class="product.stock > 0 ? 'bg-pink-50 hover:bg-pink-500 text-pink-600 hover:text-white border-pink-200' : 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'"
+                                class="px-3 py-2 rounded-xl text-xs font-bold transition border flex items-center gap-1.5">
+                                <i class="fa-solid" :class="product.stock > 0 ? 'fa-cart-plus' : 'fa-ban'"></i>
+                                <span x-text="product.stock > 0 ? 'เพิ่มในตะกร้า' : 'สินค้าหมด'"></span>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </main>
+
+        <!-- Cart & Checkout Modal -->
+        <div x-show="cartOpen" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex justify-end" x-transition>
+            <div class="bg-white w-full max-w-md h-full flex flex-col justify-between shadow-2xl overflow-y-auto" @click.away="cartOpen = false">
+                <div class="p-4 bg-pink-500 text-white flex justify-between items-center sticky top-0 z-10">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-basket-shopping text-xl"></i>
+                        <h3 class="font-kanit font-bold text-lg">ตะกร้าสินค้า</h3>
+                    </div>
+                    <button @click="cartOpen = false" class="text-white hover:text-pink-200 text-xl font-bold p-1">&times;</button>
+                </div>
+
+                <div class="p-4 flex-grow overflow-y-auto space-y-3">
+                    <template x-if="cart.length === 0">
+                        <div class="text-center py-12 text-slate-400 space-y-3">
+                            <i class="fa-solid fa-basket-shopping text-4xl text-slate-300"></i>
+                            <p class="text-sm">ไม่มีสินค้าในตะกร้า</p>
+                        </div>
+                    </template>
+                    <template x-for="item in cart" :key="item.id">
+                        <div class="flex items-center justify-between gap-3 py-3 border-b border-slate-100">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-xl" x-text="item.emoji"></div>
+                                <div>
+                                    <h4 class="text-xs font-semibold text-slate-800 line-clamp-1" x-text="item.name"></h4>
+                                    <p class="text-xs text-pink-600 font-bold mt-0.5" x-text="'฿' + (item.price * item.quantity)"></p>
+                                </div>
+                            </div>
+                            <div class="flex items-center border border-slate-200 rounded-lg">
+                                <button @click="updateCartQuantity(item.id, -1)" class="px-2 py-1 text-slate-500 hover:text-pink-600 text-xs font-bold">-</button>
+                                <span class="px-2 text-xs font-semibold text-slate-700" x-text="item.quantity"></span>
+                                <button @click="updateCartQuantity(item.id, 1)" class="px-2 py-1 text-slate-500 hover:text-pink-600 text-xs font-bold">+</button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Summary & Order Form -->
+                <div class="p-4 bg-slate-50 border-t border-slate-200 space-y-3" x-show="cart.length > 0">
+                    <div class="space-y-1 text-sm border-b border-slate-200 pb-3">
+                        <div class="flex justify-between text-slate-600">
+                            <span>ยอดรวมสินค้า</span>
+                            <span class="font-semibold" x-text="'฿' + getCartTotalSum()"></span>
+                        </div>
+                        <div class="flex justify-between text-base font-bold text-slate-800 pt-1">
+                            <span>ยอดรวมทั้งหมด</span>
+                            <span class="text-pink-600 text-xl" x-text="'฿' + getCartTotalSum()"></span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <p class="text-xs font-bold text-slate-700 uppercase">ข้อมูลผู้รับสินค้า</p>
+                        <input type="text" x-model="checkoutForm.name" placeholder="ชื่อ-นามสกุล *" class="w-full text-xs p-2.5 border rounded-lg focus:outline-none focus:border-pink-500">
+                        <input type="tel" x-model="checkoutForm.phone" placeholder="เบอร์โทรศัพท์ *" class="w-full text-xs p-2.5 border rounded-lg focus:outline-none focus:border-pink-500">
+                        <textarea x-model="checkoutForm.address" rows="2" placeholder="ที่อยู่จัดส่ง *" class="w-full text-xs p-2.5 border rounded-lg focus:outline-none focus:border-pink-500"></textarea>
+                        <textarea x-model="checkoutForm.note" rows="1" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)" class="w-full text-xs p-2.5 border rounded-lg focus:outline-none focus:border-pink-500"></textarea>
+                    </div>
+
+                    <button @click="submitCustomerOrder()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl shadow transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i> ยืนยันคำสั่งซื้อ (เชื่อมแอดมินทันที)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <footer class="bg-slate-900 text-slate-400 py-6 text-center text-xs mt-auto">
+            <p>&copy; 2026 น้องฟาเซีย หิ้วให้ - ระบบร้านค้าออนไลน์ตัดสต็อกเรียลไทม์</p>
+        </footer>
+    </div>
+
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 2.1: LOGIN SCREEN / หน้าล็อกอินเข้าหลังบ้านเฉพาะแอดมินและยูสเซอร์         -->
+    <!-- ========================================================================= -->
+    <div x-show="viewMode === 'login'" class="flex-1 flex items-center justify-center bg-slate-900 p-4 min-h-[calc(100vh-37px)]">
+        <div class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl space-y-6 border border-slate-800">
+            <div class="text-center space-y-2">
+                <div class="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto text-3xl shadow-inner">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <h2 class="font-kanit font-bold text-2xl text-slate-800">เข้าสู่ระบบหลังบ้าน</h2>
+                <p class="text-xs text-slate-500">สำหรับผู้ดูแลระบบ (Admin) และผู้จัดการร้านที่ได้รับอนุญาตเท่านั้น</p>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">ชื่อผู้ใช้งาน (Username)</label>
+                    <input type="text" x-model="loginForm.username" placeholder="กรอก Username ของท่าน" class="w-full p-3 text-sm border rounded-xl focus:outline-none focus:border-emerald-500 bg-slate-50">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">รหัสผ่าน (Password)</label>
+                    <input type="password" x-model="loginForm.password" placeholder="กรอก Password" @keyup.enter="handleLogin()" class="w-full p-3 text-sm border rounded-xl focus:outline-none focus:border-emerald-500 bg-slate-50">
+                </div>
+
+                <button @click="handleLogin()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition text-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i> เข้าสู่ระบบหลังบ้าน
+                </button>
+            </div>
+
+            <div class="bg-slate-50 p-4 rounded-xl text-xs text-slate-500 space-y-1 border border-slate-200">
+                <p class="font-bold text-slate-700"><i class="fa-solid fa-circle-info text-emerald-600 mr-1"></i> ข้อมูลเข้าสู่ระบบเริ่มต้น (Default):</p>
+                <p>• <b>Admin หลัก:</b> username: <code class="bg-white px-1.5 py-0.5 rounded border">admin</code> / password: <code class="bg-white px-1.5 py-0.5 rounded border">1234</code></p>
+                <p class="text-[11px] text-slate-400 mt-1">*(แอดมินหลักสามารถสร้างบัญชียูสเซอร์เพิ่มได้ในเมนูจัดการผู้ใช้งาน)*</p>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 2.2: ADMIN BACKOFFICE / ระบบหลังบ้านแอดมิน (หลังล็อกอินสำเร็จ)           -->
+    <!-- ========================================================================= -->
+    <div x-show="viewMode === 'admin'" class="flex-1 flex h-[calc(100vh-37px)] overflow-hidden">
+        
+        <!-- Sidebar -->
+        <aside class="w-64 bg-slate-900 text-white flex flex-col hidden md:flex">
+            <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-store text-emerald-400 text-lg"></i>
+                    <span class="font-bold tracking-wider text-base">Backoffice</span>
+                </div>
+            </div>
+            <!-- Current User Badge -->
+            <div class="px-5 py-3 bg-slate-800/60 border-b border-slate-800 flex items-center justify-between text-xs">
+                <div>
+                    <span class="text-slate-400 block text-[10px]">เข้าสู่ระบบในชื่อ</span>
+                    <span class="font-semibold text-emerald-400" x-text="currentUser ? currentUser.name : ''"></span>
+                    <span class="text-[10px] bg-slate-700 px-1.5 py-0.5 rounded ml-1 text-slate-300" x-text="currentUser && currentUser.role === 'superadmin' ? 'แอดมินหลัก' : 'ผู้จัดการร้าน'"></span>
+                </div>
+                <button @click="logout()" class="text-red-400 hover:text-red-300 p-1.5 rounded-lg hover:bg-slate-700 transition" title="ออกจากระบบ">
+                    <i class="fa-solid fa-power-off"></i>
+                </button>
+            </div>
+
+            <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+                <button @click="adminTab = 'dashboard'" :class="adminTab === 'dashboard' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-300 hover:bg-slate-800'" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition text-left font-medium text-sm">
+                    <i class="fa-solid fa-chart-pie w-5"></i> สรุปภาพรวม
+                </button>
+                <button @click="adminTab = 'orders'" :class="adminTab === 'orders' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-300 hover:bg-slate-800'" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition text-left font-medium text-sm">
+                    <i class="fa-solid fa-bag-shopping w-5"></i> จัดการคำสั่งซื้อ
+                    <span class="ml-auto bg-amber-500 text-slate-900 font-bold px-2 py-0.5 rounded-full text-[10px]" x-text="getPendingOrderCount()"></span>
+                </button>
+                <button @click="adminTab = 'inventory'" :class="adminTab === 'inventory' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-300 hover:bg-slate-800'" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition text-left font-medium text-sm">
+                    <i class="fa-solid fa-boxes-stacked w-5"></i> คลังสินค้า & สต็อก
+                </button>
+                <!-- เมนูจัดการผู้ใช้งาน (เฉพาะ Super Admin เท่านั้นที่เห็น) -->
+                <template x-if="currentUser && currentUser.role === 'superadmin'">
+                    <button @click="adminTab = 'users'" :class="adminTab === 'users' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-300 hover:bg-slate-800'" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition text-left font-medium text-sm border-t border-slate-800 mt-2 pt-4">
+                        <i class="fa-solid fa-users-gear w-5 text-emerald-400"></i> จัดการผู้จัดการหลังบ้าน
+                    </button>
+                </template>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col overflow-y-auto bg-slate-50">
+            <header class="bg-white shadow-sm h-16 flex items-center justify-between px-6 sticky top-0 z-10">
+                <div class="flex items-center gap-3">
+                    <h1 class="text-lg font-bold text-slate-800" x-text="getAdminTitle()"></h1>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full font-medium border border-emerald-200">
+                        <i class="fa-solid fa-circle text-xs text-emerald-500 mr-1"></i> Secured Access On
+                    </span>
+                    <button @click="logout()" class="md:hidden bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold">ออกระบบ</button>
+                </div>
+            </header>
+
+            <main class="p-6">
+                
+                <!-- 1. DASHBOARD TAB -->
+                <div x-show="adminTab === 'dashboard'" class="space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-slate-500 font-medium">ยอดขายรวม</p>
+                                <h3 class="text-2xl font-bold text-slate-800 mt-1" x-text="'฿' + getTotalSales()"></h3>
+                            </div>
+                            <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-wallet"></i></div>
+                        </div>
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-slate-500 font-medium">ออเดอร์ใหม่</p>
+                                <h3 class="text-2xl font-bold text-amber-600 mt-1" x-text="getPendingOrderCount() + ' รายการ'"></h3>
+                            </div>
+                            <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-clock"></i></div>
+                        </div>
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-slate-500 font-medium">สินค้าใกล้หมด (Stock < 5)</p>
+                                <h3 class="text-2xl font-bold text-red-600 mt-1" x-text="getLowStockCount() + ' รายการ'"></h3>
+                            </div>
+                            <div class="w-12 h-12 bg-red-50 text-red-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        </div>
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-slate-500 font-medium">สินค้าทั้งหมด</p>
+                                <h3 class="text-2xl font-bold text-slate-800 mt-1" x-text="products.length + ' รายการ'"></h3>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-box"></i></div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Orders -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                        <h2 class="text-base font-bold text-slate-800 mb-4">คำสั่งซื้อล่าสุดจากหน้าร้าน</h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-xs text-slate-400 uppercase">
+                                        <th class="py-3 px-4">รหัส</th>
+                                        <th class="py-3 px-4">ลูกค้า</th>
+                                        <th class="py-3 px-4">รายการ</th>
+                                        <th class="py-3 px-4">ยอดรวม</th>
+                                        <th class="py-3 px-4">สถานะ</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-sm divide-y divide-slate-100">
+                                    <template x-for="order in orders" :key="order.id">
+                                        <tr>
+                                            <td class="py-3 px-4 font-medium text-slate-700" x-text="order.id"></td>
+                                            <td class="py-3 px-4">
+                                                <p class="font-medium" x-text="order.customer"></p>
+                                                <p class="text-xs text-slate-400" x-text="order.phone"></p>
+                                            </td>
+                                            <td class="py-3 px-4 text-xs text-slate-600" x-text="order.items"></td>
+                                            <td class="py-3 px-4 font-semibold text-emerald-600" x-text="'฿' + order.total"></td>
+                                            <td class="py-3 px-4">
+                                                <span class="px-2.5 py-1 rounded-full text-xs font-medium"
+                                                    :class="{
+                                                        'bg-amber-100 text-amber-700': order.status === 'รอจัดส่ง',
+                                                        'bg-blue-100 text-blue-700': order.status === 'กำลังส่ง',
+                                                        'bg-emerald-100 text-emerald-700': order.status === 'สำเร็จ'
+                                                    }" x-text="order.status"></span>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. ORDERS TAB -->
+                <div x-show="adminTab === 'orders'" class="space-y-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                        <h2 class="text-base font-bold text-slate-800 mb-4">รายการคำสั่งซื้อทั้งหมด</h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-xs text-slate-400 uppercase">
+                                        <th class="py-3 px-4">รหัส / เวลา</th>
+                                        <th class="py-3 px-4">ลูกค้า / ที่อยู่</th>
+                                        <th class="py-3 px-4">สินค้า</th>
+                                        <th class="py-3 px-4">ยอดรวม</th>
+                                        <th class="py-3 px-4">สถานะ</th>
+                                        <th class="py-3 px-4 text-center">เปลี่ยนสถานะ</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-sm divide-y divide-slate-100">
+                                    <template x-for="order in orders" :key="order.id">
+                                        <tr>
+                                            <td class="py-3 px-4">
+                                                <p class="font-medium text-slate-700" x-text="order.id"></p>
+                                                <p class="text-[10px] text-slate-400" x-text="order.date"></p>
+                                            </td>
+                                            <td class="py-3 px-4">
+                                                <p class="font-medium" x-text="order.customer"></p>
+                                                <p class="text-xs text-slate-400" x-text="order.phone"></p>
+                                                <p class="text-xs text-slate-500 mt-1" x-text="order.address"></p>
+                                            </td>
+                                            <td class="py-3 px-4 text-slate-600 text-xs" x-text="order.items"></td>
+                                            <td class="py-3 px-4 font-semibold text-emerald-600" x-text="'฿' + order.total"></td>
+                                            <td class="py-3 px-4">
+                                                <span class="px-2.5 py-1 rounded-full text-xs font-medium"
+                                                    :class="{
+                                                        'bg-amber-100 text-amber-700': order.status === 'รอจัดส่ง',
+                                                        'bg-blue-100 text-blue-700': order.status === 'กำลังส่ง',
+                                                        'bg-emerald-100 text-emerald-700': order.status === 'สำเร็จ'
+                                                    }" x-text="order.status"></span>
+                                            </td>
+                                            <td class="py-3 px-4 text-center space-x-1">
+                                                <button @click="updateOrderStatus(order.id, 'กำลังส่ง')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-xs font-medium hover:bg-blue-100">จัดส่ง</button>
+                                                <button @click="updateOrderStatus(order.id, 'สำเร็จ')" class="bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-lg text-xs font-medium hover:bg-emerald-100">สำเร็จ</button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. INVENTORY TAB -->
+                <div x-show="adminTab === 'inventory'" class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-800">จัดการสินค้าและสต็อก (Real-time Sync)</h2>
+                            <p class="text-xs text-slate-500">การปรับปรุงข้อมูลตรงนี้จะแสดงผลไปยังหน้าร้านทันที</p>
+                        </div>
+                        <button @click="openAddProductModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 shadow-sm">
+                            <i class="fa-solid fa-plus"></i> เพิ่มสินค้าใหม่
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-xs text-slate-400 uppercase">
+                                        <th class="py-3 px-4">สินค้า</th>
+                                        <th class="py-3 px-4">หมวดหมู่</th>
+                                        <th class="py-3 px-4">ราคาขาย (บาท)</th>
+                                        <th class="py-3 px-4">จำนวนสต็อก</th>
+                                        <th class="py-3 px-4 text-center">ปรับเพิ่ม/ลดสต็อก</th>
+                                        <th class="py-3 px-4 text-center">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-sm divide-y divide-slate-100">
+                                    <template x-for="product in products" :key="product.id">
+                                        <tr>
+                                            <td class="py-3 px-4 font-medium text-slate-700 flex items-center gap-3">
+                                                <span class="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-xl" x-text="product.emoji || '📦'"></span>
+                                                <div>
+                                                    <p class="font-semibold text-slate-800" x-text="product.name"></p>
+                                                    <p class="text-[10px] text-slate-400" x-text="'หน่วย: ' + (product.unit || 'ชิ้น')"></p>
+                                                </div>
+                                            </td>
+                                            <td class="py-3 px-4 text-slate-500 text-xs" x-text="product.category"></td>
+                                            <td class="py-3 px-4 font-semibold text-slate-700">
+                                                <div class="flex items-center gap-1">
+                                                    <span>฿</span>
+                                                    <input type="number" x-model.number="product.price" @change="saveProductsToStorage()" class="w-20 px-2 py-1 border rounded text-xs focus:outline-none focus:border-emerald-500">
+                                                </div>
+                                            </td>
+                                            <td class="py-3 px-4">
+                                                <span class="px-2.5 py-1 rounded-full text-xs font-bold"
+                                                    :class="product.stock > 5 ? 'bg-emerald-100 text-emerald-700' : (product.stock > 0 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700')"
+                                                    x-text="product.stock + ' ชิ้น'"></span>
+                                            </td>
+                                            <td class="py-3 px-4 text-center">
+                                                <div class="inline-flex items-center border border-slate-200 rounded-xl overflow-hidden">
+                                                    <button @click="changeStock(product.id, -1)" class="px-3 py-1 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold">-</button>
+                                                    <span class="px-3 py-1 font-semibold text-xs" x-text="product.stock"></span>
+                                                    <button @click="changeStock(product.id, 1)" class="px-3 py-1 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold">+</button>
+                                                </div>
+                                            </td>
+                                            <td class="py-3 px-4 text-center space-x-2">
+                                                <button @click="editProduct(product)" class="text-slate-400 hover:text-blue-600 p-1" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
+                                                <button @click="confirmDeleteProduct(product)" class="text-slate-400 hover:text-red-600 p-1" title="ลบ"><i class="fa-solid fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. USERS MANAGEMENT TAB (เฉพาะ Super Admin) -->
+                <div x-show="adminTab === 'users' && currentUser && currentUser.role === 'superadmin'" class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-800">จัดการยูสเซอร์ผู้จัดการหลังบ้าน</h2>
+                            <p class="text-xs text-slate-500">เพิ่มหรือกำหนดสิทธิ์ผู้ใช้งานสำหรับดูแลออเดอร์และคลังสินค้า</p>
+                        </div>
+                        <button @click="openAddUserModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 shadow-sm">
+                            <i class="fa-solid fa-user-plus"></i> เพิ่มยูสเซอร์ผู้จัดการใหม่
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-xs text-slate-400 uppercase">
+                                        <th class="py-3 px-4">ชื่อผู้จัดการ / ชื่อผู้ใช้งาน</th>
+                                        <th class="py-3 px-4">Username</th>
+                                        <th class="py-3 px-4">รหัสผ่าน</th>
+                                        <th class="py-3 px-4">สิทธิ์การใช้งาน</th>
+                                        <th class="py-3 px-4 text-center">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-sm divide-y divide-slate-100">
+                                    <template x-for="user in systemUsers" :key="user.username">
+                                        <tr>
+                                            <td class="py-3 px-4 font-semibold text-slate-800" x-text="user.name"></td>
+                                            <td class="py-3 px-4 text-slate-600 font-mono text-xs" x-text="user.username"></td>
+                                            <td class="py-3 px-4 text-slate-500 font-mono text-xs">••••••</td>
+                                            <td class="py-3 px-4">
+                                                <span class="px-2.5 py-1 rounded-full text-xs font-bold"
+                                                    :class="user.role === 'superadmin' ? 'bg-purple-100 text-purple-700' : 'bg-emerald-100 text-emerald-700'"
+                                                    x-text="user.role === 'superadmin' ? 'แอดมินหลัก (Super Admin)' : 'ผู้จัดการร้าน (Manager)'"></span>
+                                            </td>
+                                            <td class="py-3 px-4 text-center space-x-2">
+                                                <template x-if="user.username !== 'admin'">
+                                                    <button @click="confirmDeleteUser(user)" class="text-slate-400 hover:text-red-600 p-1" title="ลบยูสเซอร์"><i class="fa-solid fa-trash"></i></button>
+                                                </template>
+                                                <template x-if="user.username === 'admin'">
+                                                    <span class="text-xs text-slate-400 italic">บัญชีหลัก</span>
+                                                </template>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal: Add/Edit Product -->
+    <div x-show="productModalOpen" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" x-transition>
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl" @click.away="productModalOpen = false">
+            <h3 class="text-lg font-bold text-slate-800" x-text="editingProductId ? 'แก้ไขรายการสินค้า' : 'เพิ่มสินค้าใหม่'"></h3>
+            
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-medium mb-1 text-slate-600">ชื่อสินค้า</label>
+                    <input type="text" x-model="productForm.name" class="w-full p-2.5 border rounded-lg focus:outline-none focus:border-emerald-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-medium mb-1 text-slate-600">หมวดหมู่</label>
+                        <select x-model="productForm.category" class="w-full p-2.5 border rounded-lg focus:outline-none focus:border-emerald-500">
+                            <option value="ผลไม้สด">ผลไม้สด</option>
+                            <option value="ขนม & ของฝาก">ขนม & ของฝาก</option>
+                            <option value="เครื่องแกง & ของดี">เครื่องแกง & ของดี</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-medium mb-1 text-slate-600">สัญลักษณ์/Emoji</label>
+                        <input type="text" x-model="productForm.emoji" placeholder="เช่น 🥭" class="w-full p-2.5 border rounded-lg focus:outline-none focus:border-emerald-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block font-medium mb-1 text-slate-600">ราคา (บาท)</label>
+                        <input type="number" x-model.number="productForm.price" class="w-full p-2.5 border rounded-lg focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block font-medium mb-1 text-slate-600">จำนวนสต็อก</label>
+                        <input type="number" x-model.number="productForm.stock" class="w-full p-2.5 border rounded-lg focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block font-medium mb-1 text-slate-600">หน่วย</label>
+                        <input type="text" x-model="productForm.unit" placeholder="เช่น กิโลกรัม" class="w-full p-2.5 border rounded-lg focus:outline-none focus:border-emerald-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-3">
+                <button @click="productModalOpen = false" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200">ยกเลิก</button>
+                <button @click="saveProductForm()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700">บันทึกข้อมูล</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Add Manager User -->
+    <div x-show="userModalOpen" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" x-transition>
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl" @click.away="userModalOpen = false">
+            <h3 class="text-lg font-bold text-slate-800">เพิ่มยูสเซอร์ผู้จัดการหลังบ้าน</h3>
+            
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-medium mb-1 text-slate-600">ชื่อ-นามสกุล / ชื่อผู้จัดการ</label>
+                    <input type="text" x-model="userForm.name" placeholder="เช่น คุณฟาเซีย" class="w-full p-2.5 border rounded-lg focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block font-medium mb-1 text-slate-600">ชื่อผู้ใช้งาน (Username)</label>
+                    <input type="text" x-model="userForm.username" placeholder="เช่น fasia_mngr" class="w-full p-2.5 border rounded-lg focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block font-medium mb-1 text-slate-600">รหัสผ่าน (Password)</label>
+                    <input type="password" x-model="userForm.password" placeholder="รหัสผ่านเข้าใช้งาน" class="w-full p-2.5 border rounded-lg focus:outline-none focus:border-emerald-500">
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-3">
+                <button @click="userModalOpen = false" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200">ยกเลิก</button>
+                <button @click="saveNewUser()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700">สร้างยูสเซอร์</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Message Modal -->
+    <div x-show="toast.show" class="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-700" x-transition>
+        <i class="fa-solid" :class="toast.type === 'error' ? 'fa-triangle-exclamation text-red-400' : 'fa-circle-check text-emerald-400'"></i>
+        <span class="text-xs font-medium" x-text="toast.message"></span>
+        <button @click="toast.show = false" class="ml-2 text-slate-400 hover:text-white">&times;</button>
+    </div>
+
+    <!-- Delete Product Confirmation Modal -->
+    <div x-show="deleteConfirmOpen" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" x-transition>
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl">
+            <div class="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-trash"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-slate-800 text-base">ยืนยันการลบสินค้า</h3>
+                <p class="text-xs text-slate-500 mt-1" x-text="'คุณต้องการลบสินค้า ' + (productToDelete ? productToDelete.name : '') + ' ใช่หรือไม่?'"></p>
+            </div>
+            <div class="flex justify-center gap-3 pt-2">
+                <button @click="deleteConfirmOpen = false" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200">ยกเลิก</button>
+                <button @click="executeDeleteProduct()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-red-600 text-white hover:bg-red-700">ลบรายการ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete User Confirmation Modal -->
+    <div x-show="deleteUserConfirmOpen" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" x-transition>
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl">
+            <div class="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-user-xmark"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-slate-800 text-base">ยืนยันการลบยูสเซอร์</h3>
+                <p class="text-xs text-slate-500 mt-1" x-text="'ต้องการลบสิทธิ์ผู้จัดการของ ' + (userToDelete ? userToDelete.name : '') + ' ใช่หรือไม่?'"></p>
+            </div>
+            <div class="flex justify-center gap-3 pt-2">
+                <button @click="deleteUserConfirmOpen = false" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200">ยกเลิก</button>
+                <button @click="executeDeleteUser()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-red-600 text-white hover:bg-red-700">ลบยูสเซอร์</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Logic Script -->
+    <script>
+        function mainApp() {
+            return {
+                viewMode: 'storefront', // 'storefront', 'login', หรือ 'admin'
+                adminTab: 'dashboard',
+                categoryFilter: 'all',
+                cartOpen: false,
+                cart: [],
+                checkoutForm: { name: '', phone: '', address: '', note: '' },
+                
+                // Login & Users State
+                currentUser: null,
+                systemUsers: [],
+                loginForm: { username: '', password: '' },
+
+                // Products & Orders State
+                products: [],
+                orders: [],
+
+                // Modal States
+                productModalOpen: false,
+                editingProductId: null,
+                productForm: { name: '', category: 'ผลไม้สด', price: 0, stock: 0, unit: 'ชิ้น', emoji: '📦' },
+                
+                userModalOpen: false,
+                userForm: { name: '', username: '', password: '', role: 'manager' },
+
+                deleteConfirmOpen: false,
+                productToDelete: null,
+
+                deleteUserConfirmOpen: false,
+                userToDelete: null,
+
+                toast: { show: false, message: '', type: 'success' },
+
+                showToast(msg, type = 'success') {
+                    this.toast.message = msg;
+                    this.toast.type = type;
+                    this.toast.show = true;
+                    setTimeout(() => { this.toast.show = false; }, 3500);
+                },
+
+                init() {
+                    this.loadProductsFromStorage();
+                    this.loadOrdersFromStorage();
+                    this.loadUsersFromStorage();
+
+                    // ตรวจสอบเซสชันที่เคยเข้าสู่ระบบไว้
+                    const activeSession = sessionStorage.getItem('fasia_current_user');
+                    if (activeSession) {
+                        this.currentUser = JSON.parse(activeSession);
+                    }
+
+                    // ซิงค์ข้อมูล Real-time ระหว่างแท็บ/หน้าต่าง
+                    window.addEventListener('storage', (e) => {
+                        if (e.key === 'fasia_products') {
+                            this.products = JSON.parse(e.newValue || '[]');
+                        }
+                        if (e.key === 'fasia_orders') {
+                            this.orders = JSON.parse(e.newValue || '[]');
+                        }
+                        if (e.key === 'fasia_users') {
+                            this.systemUsers = JSON.parse(e.newValue || '[]');
+                        }
+                    });
+                },
+
+                loadUsersFromStorage() {
+                    const saved = localStorage.getItem('fasia_users');
+                    if (saved) {
+                        this.systemUsers = JSON.parse(saved);
+                    } else {
+                        // กำหนดค่าเริ่มต้นแอดมินหลัก
+                        this.systemUsers = [
+                            { name: 'ผู้ดูแลระบบหลัก', username: 'admin', password: '1234', role: 'superadmin' }
+                        ];
+                        this.saveUsersToStorage();
+                    }
+                },
+                saveUsersToStorage() {
+                    localStorage.setItem('fasia_users', JSON.stringify(this.systemUsers));
+                },
+
+                loadProductsFromStorage() {
+                    const saved = localStorage.getItem('fasia_products');
+                    if (saved) {
+                        this.products = JSON.parse(saved);
+                    } else {
+                        this.products = [
+                            { id: 1, name: "ฝรั่งสดพัทลุง กรอบหวาน", category: "ผลไม้สด", price: 60, stock: 15, unit: "กิโลกรัม", emoji: "🍐" },
+                            { id: 2, name: "ขนมเต้าส้อ พัทลุง ไส้ถั่วไข่เค็ม", category: "ขนม & ของฝาก", price: 85, stock: 10, unit: "กล่อง", emoji: "🍪" },
+                            { id: 3, name: "ส้มโอทับทิมสยาม คัดเกรด A", category: "ผลไม้สด", price: 180, stock: 4, unit: "ลูก", emoji: "🍊" },
+                            { id: 4, name: "กะปิแท้เมืองพัทลุง หอมอร่อย", category: "เครื่องแกง & ของดี", price: 120, stock: 20, unit: "กระปุก (500g)", emoji: "🌶️" },
+                            { id: 5, name: "มะม่วงเบาแช่อิ่ม กรอบอร่อย", category: "ผลไม้สด", price: 150, stock: 8, unit: "ถุง (500g)", emoji: "🥭" }
+                        ];
+                        this.saveProductsToStorage();
+                    }
+                },
+                saveProductsToStorage() {
+                    localStorage.setItem('fasia_products', JSON.stringify(this.products));
+                },
+
+                loadOrdersFromStorage() {
+                    const saved = localStorage.getItem('fasia_orders');
+                    if (saved) {
+                        this.orders = JSON.parse(saved);
+                    } else {
+                        this.orders = [
+                            { id: 'ORD-1001', customer: 'คุณสมชาย ใจดี', phone: '089-123-4567', address: '123/4 ถ.ราเมศวร์ ต.คูหาสวรรค์ อ.เมือง พัทลุง', note: 'ขอฝรั่งลูกกรอบๆ', items: 'ฝรั่งสดพัทลุง x 2', total: 120, status: 'รอจัดส่ง', date: '20/10/2026 10:30' }
+                        ];
+                        this.saveOrdersToStorage();
+                    }
+                },
+                saveOrdersToStorage() {
+                    localStorage.setItem('fasia_orders', JSON.stringify(this.orders));
+                },
+
+                switchToStorefront() {
+                    this.viewMode = 'storefront';
+                },
+                switchToAdmin() {
+                    if (this.currentUser) {
+                        this.viewMode = 'admin';
+                    } else {
+                        this.viewMode = 'login';
+                    }
+                },
+                handleLogin() {
+                    const u = this.systemUsers.find(item => item.username === this.loginForm.username && item.password === this.loginForm.password);
+                    if (u) {
+                        this.currentUser = u;
+                        sessionStorage.setItem('fasia_current_user', JSON.stringify(u));
+                        this.loginForm = { username: '', password: '' };
+                        this.viewMode = 'admin';
+                        this.showToast(`ยินดีต้อนรับคุณ ${u.name} เข้าสู่ระบบหลังบ้านค่ะ`);
+                    } else {
+                        this.showToast('ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง หรือไม่มีสิทธิ์เข้าใช้งาน', 'error');
+                    }
+                },
+                logout() {
+                    this.currentUser = null;
+                    sessionStorage.removeItem('fasia_current_user');
+                    this.viewMode = 'login';
+                    this.showToast('ออกจากระบบเรียบร้อยแล้ว');
+                },
+
+                get filteredProductsStore() {
+                    if (this.categoryFilter === 'all') return this.products;
+                    return this.products.filter(p => p.category === this.categoryFilter);
+                },
+                addToCart(product) {
+                    const storeProduct = this.products.find(p => p.id === product.id);
+                    if (!storeProduct || storeProduct.stock <= 0) {
+                        this.showToast('ขออภัยค่ะ สินค้านี้หมดชั่วคราว', 'error');
+                        return;
+                    }
+
+                    const existingItem = this.cart.find(item => item.id === product.id);
+                    if (existingItem) {
+                        if (existingItem.quantity + 1 > storeProduct.stock) {
+                            this.showToast(`ขออภัยค่ะ สินค้าคงเหลือเพียง ${storeProduct.stock} ชิ้นเท่านั้น`, 'error');
+                            return;
+                        }
+                        existingItem.quantity++;
+                    } else {
+                        this.cart.push({ ...product, quantity: 1 });
+                    }
+                    this.showToast(`เพิ่ม "${product.name}" ลงในตะกร้าแล้ว`);
+                },
+                updateCartQuantity(id, delta) {
+                    const item = this.cart.find(i => i.id === id);
+                    const storeProduct = this.products.find(p => p.id === id);
+
+                    if (item) {
+                        if (delta > 0 && item.quantity + 1 > storeProduct.stock) {
+                            this.showToast(`ขออภัยค่ะ สินค้าคงเหลือในสต็อกเพียง ${storeProduct.stock} ชิ้น`, 'error');
+                            return;
+                        }
+                        item.quantity += delta;
+                        if (item.quantity <= 0) {
+                            this.cart = this.cart.filter(i => i.id !== id);
+                        }
+                    }
+                },
+                getCartTotalCount() {
+                    return this.cart.reduce((sum, item) => sum + item.quantity, 0);
+                },
+                getCartTotalSum() {
+                    return this.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                },
+                submitCustomerOrder() {
+                    if (this.cart.length === 0) return;
+                    if (!this.checkoutForm.name || !this.checkoutForm.phone || !this.checkoutForm.address) {
+                        this.showToast('กรุณากรอกชื่อ เบอร์โทร และที่อยู่จัดส่งให้ครบถ้วนค่ะ', 'error');
+                        return;
+                    }
+
+                    this.cart.forEach(cartItem => {
+                        const targetProd = this.products.find(p => p.id === cartItem.id);
+                        if (targetProd) {
+                            targetProd.stock = Math.max(0, targetProd.stock - cartItem.quantity);
+                        }
+                    });
+                    this.saveProductsToStorage();
+
+                    const orderId = 'ORD-' + Math.floor(1000 + Math.random() * 9000);
+                    const itemsSummary = this.cart.map(i => `${i.name} x ${i.quantity}`).join(', ');
+                    const newOrder = {
+                        id: orderId,
+                        customer: this.checkoutForm.name,
+                        phone: this.checkoutForm.phone,
+                        address: this.checkoutForm.address,
+                        note: this.checkoutForm.note || '-',
+                        items: itemsSummary,
+                        total: this.getCartTotalSum(),
+                        status: 'รอจัดส่ง',
+                        date: new Date().toLocaleDateString('th-TH') + ' ' + new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
+                    };
+
+                    this.orders.unshift(newOrder);
+                    this.saveOrdersToStorage();
+
+                    this.showToast('สั่งซื้อสำเร็จ! ระบบตัดสต็อกและส่งข้อมูลไปยังหลังบ้านเรียบร้อยค่ะ');
+
+                    this.cart = [];
+                    this.checkoutForm = { name: '', phone: '', address: '', note: '' };
+                    this.cartOpen = false;
+                },
+
+                getAdminTitle() {
+                    switch(this.adminTab) {
+                        case 'dashboard': return 'ภาพรวมและสรุปข้อมูลร้าน';
+                        case 'orders': return 'จัดการคำสั่งซื้อลูกค้า';
+                        case 'inventory': return 'จัดการสต็อกสินค้า & ปรับราคา';
+                        case 'users': return 'จัดการผู้จัดการและยูสเซอร์หลังบ้าน';
+                        default: return 'ระบบหลังบ้าน';
+                    }
+                },
+                changeStock(productId, delta) {
+                    const product = this.products.find(p => p.id === productId);
+                    if (product) {
+                        product.stock = Math.max(0, product.stock + delta);
+                        this.saveProductsToStorage();
+                    }
+                },
+                openAddProductModal() {
+                    this.editingProductId = null;
+                    this.productForm = { name: '', category: 'ผลไม้สด', price: 50, stock: 10, unit: 'ชิ้น', emoji: '📦' };
+                    this.productModalOpen = true;
+                },
+                editProduct(product) {
+                    this.editingProductId = product.id;
+                    this.productForm = { ...product };
+                    this.productModalOpen = true;
+                },
+                saveProductForm() {
+                    if (!this.productForm.name || this.productForm.price <= 0) {
+                        this.showToast('กรุณากรอกชื่อและราคาให้ถูกต้อง', 'error');
+                        return;
+                    }
+
+                    if (this.editingProductId) {
+                        const index = this.products.findIndex(p => p.id === this.editingProductId);
+                        if (index !== -1) {
+                            this.products[index] = { ...this.productForm, id: this.editingProductId };
+                        }
+                    } else {
+                        const newId = Date.now();
+                        this.products.push({ ...this.productForm, id: newId });
+                    }
+
+                    this.saveProductsToStorage();
+                    this.productModalOpen = false;
+                    this.showToast('บันทึกข้อมูลสินค้าเรียบร้อยแล้ว');
+                },
+                confirmDeleteProduct(product) {
+                    this.productToDelete = product;
+                    this.deleteConfirmOpen = true;
+                },
+                executeDeleteProduct() {
+                    if (this.productToDelete) {
+                        this.products = this.products.filter(p => p.id !== this.productToDelete.id);
+                        this.saveProductsToStorage();
+                        this.deleteConfirmOpen = false;
+                        this.productToDelete = null;
+                        this.showToast('ลบรายการสินค้าเรียบร้อยแล้ว');
+                    }
+                },
+                openAddUserModal() {
+                    this.userForm = { name: '', username: '', password: '', role: 'manager' };
+                    this.userModalOpen = true;
+                },
+                saveNewUser() {
+                    if (!this.userForm.name || !this.userForm.username || !this.userForm.password) {
+                        this.showToast('กรุณากรอกข้อมูลยูสเซอร์ให้ครบถ้วน', 'error');
+                        return;
+                    }
+                    if (this.systemUsers.some(u => u.username === this.userForm.username)) {
+                        this.showToast('Username นี้มี in use อยู่แล้ว กรุณาใช้ชื่ออื่น', 'error');
+                        return;
+                    }
+
+                    this.systemUsers.push({ ...this.userForm });
+                    this.saveUsersToStorage();
+                    this.userModalOpen = false;
+                    this.showToast('สร้างยูสเซอร์ผู้จัดการใหม่สำเร็จเรียบร้อยแล้ว');
+                },
+                confirmDeleteUser(user) {
+                    this.userToDelete = user;
+                    this.deleteUserConfirmOpen = true;
+                },
+                executeDeleteUser() {
+                    if (this.userToDelete) {
+                        this.systemUsers = this.systemUsers.filter(u => u.username !== this.userToDelete.username);
+                        this.saveUsersToStorage();
+                        this.deleteUserConfirmOpen = false;
+                        this.userToDelete = null;
+                        this.showToast('ลบยูสเซอร์เรียบร้อยแล้ว');
+                    }
+                },
+                updateOrderStatus(orderId, newStatus) {
+                    const order = this.orders.find(o => o.id === orderId);
+                    if (order) {
+                        order.status = newStatus;
+                        this.saveOrdersToStorage();
+                        this.showToast(`อัปเดตสถานะออเดอร์ ${orderId} เป็น "${newStatus}" แล้ว`);
+                    }
+                },
+                getTotalSales() {
+                    return this.orders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+                },
+                getPendingOrderCount() {
+                    return this.orders.filter(o => o.status === 'รอจัดส่ง').length;
+                },
+                getLowStockCount() {
+                    return this.products.filter(p => p.stock < 5).length;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
